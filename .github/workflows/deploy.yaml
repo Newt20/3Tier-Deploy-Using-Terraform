@@ -1,0 +1,81 @@
+name: Team Directory — Deploy
+
+on:
+  push:
+    branches: [main]
+  workflow_dispatch:
+
+concurrency:
+  group: deploy-${{ github.ref }}
+  cancel-in-progress: false
+
+jobs:
+
+  deploy-backend:
+    name: Deploy Backend API
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Setup SSH
+        run: |
+          mkdir -p ~/.ssh
+          echo "${{ secrets.EC2_SSH_PRIVATE_KEY }}" > ~/.ssh/id_rsa
+          chmod 600 ~/.ssh/id_rsa
+
+      - name: Copy server files to backend via bastion jump
+        run: |
+          rsync -avz \
+            -e "ssh -i ~/.ssh/id_rsa -o StrictHostKeyChecking=no \
+                -J ubuntu@${{ secrets.BASTION_PUBLIC_IP }}" \
+            --exclude node_modules \
+            ./app/backend/ \
+            ubuntu@${{ secrets.BACKEND_PRIVATE_IP }}:/var/app/backend/
+
+      - name: Install deps + restart PM2
+        run: |
+          ssh -i ~/.ssh/id_rsa \
+              -o StrictHostKeyChecking=no \
+              -J ubuntu@${{ secrets.BASTION_PUBLIC_IP }} \
+              ubuntu@${{ secrets.BACKEND_PRIVATE_IP }} \
+              "cd /var/app/backend && npm install --omit=dev && pm2 reload nt-api && pm2 save"
+
+      - name: Cleanup
+        if: always()
+        run: rm -f ~/.ssh/id_rsa
+
+  deploy-frontend:
+    name: Deploy Frontend HTML
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Setup SSH
+        run: |
+          mkdir -p ~/.ssh
+          echo "${{ secrets.EC2_SSH_PRIVATE_KEY }}" > ~/.ssh/id_rsa
+          chmod 600 ~/.ssh/id_rsa
+          ssh-keyscan -H ${{ secrets.FRONTEND_PUBLIC_IP }} >> ~/.ssh/known_hosts 2>/dev/null || true
+
+      - name: Deploy frontend HTML
+        run: |
+          rsync -avz \
+            -e "ssh -i ~/.ssh/id_rsa -o StrictHostKeyChecking=no" \
+            ./app/frontend/ \
+            ubuntu@${{ secrets.FRONTEND_PUBLIC_IP }}:/var/www/html/app/
+
+      - name: Reload Nginx
+        run: |
+          ssh -i ~/.ssh/id_rsa -o StrictHostKeyChecking=no \
+              ubuntu@${{ secrets.FRONTEND_PUBLIC_IP }} \
+              "sudo systemctl reload nginx"
+
+      - name: Health check
+        run: |
+          sleep 3
+          curl -sf http://${{ secrets.FRONTEND_PUBLIC_IP }} | grep -q "Team Directory"
+          echo "Frontend health check passed"
+
+      - name: Cleanup
+        if: always()
+        run: rm -f ~/.ssh/id_rsa

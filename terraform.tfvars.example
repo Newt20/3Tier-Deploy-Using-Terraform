@@ -1,0 +1,25 @@
+aws_region   = "us-east-1"
+aws_profile  = "default"
+project_name = "nt"
+
+# ── Network ──────────────────────────────────────────────────
+vpc_cidr                 = "10.0.0.0/16"
+public_subnet_cidrs      = ["10.0.1.0/24", "10.0.2.0/24"]
+private_app_subnet_cidrs = ["10.0.11.0/24", "10.0.12.0/24"]
+db_subnet_cidrs          = ["10.0.21.0/24", "10.0.22.0/24"]
+allowed_ssh_cidr         = "103.187.95.64/32"   # Replace!
+
+# ── Compute ──────────────────────────────────────────────────
+instance_type    = "t3.micro"
+key_name         = "nt-keypair"
+root_volume_size = 20
+
+# ── Database ─────────────────────────────────────────────────
+db_engine         = "mysql"
+db_engine_version = "8.0"
+db_instance_class = "db.t3.micro"
+db_name           = "teamdb"
+db_username       = "nt_admin"
+# db_password   →  export TF_VAR_db_password="YourStrongPass1!"
+allocated_storage = 20
+multi_az          = false
