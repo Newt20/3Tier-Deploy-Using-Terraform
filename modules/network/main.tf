@@ -116,7 +116,10 @@ resource "aws_route_table_association" "nt-private-app-rt-assoc" {
 
 resource "aws_route_table" "nt-private-db-rt" {
   vpc_id = aws_vpc.nt-vpc.id
-  # Intentionally no routes — RDS needs no internet access
+  route {
+    cidr_block     = "0.0.0.0/0"
+    nat_gateway_id = aws_nat_gateway.nt-nat.id
+  }
   tags = { Name = "${var.project_name}-rt-private-db" }
 }
 

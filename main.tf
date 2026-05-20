@@ -60,26 +60,8 @@ module "security" {
   db_port          = var.db_port
 }
 
-module "database" {
-  source = "./modules/database"
-  project_name      = var.project_name
-  db_subnet_ids     = module.network.db_subnet_ids
-  database_sg_id    = module.security.database_sg_id
-  db_engine         = var.db_engine
-  db_engine_version = var.db_engine_version
-  db_instance_class = var.db_instance_class
-  db_name           = var.db_name
-  db_username       = var.db_username
-  db_password       = var.db_password
-  db_port           = var.db_port
-  allocated_storage = var.allocated_storage
-  multi_az          = var.multi_az
-  depends_on = [module.network, module.security]
-}
-
 module "compute" {
   source = "./modules/compute"
-
   project_name       = var.project_name
   ami_id             = data.aws_ami.ubuntu.id
   instance_type      = var.instance_type
@@ -87,13 +69,17 @@ module "compute" {
   root_volume_size   = var.root_volume_size
   public_subnet_ids  = module.network.public_subnet_ids
   private_subnet_ids = module.network.private_subnet_ids
+  db_subnet_ids      = module.network.db_subnet_ids
   public_sg_id       = module.security.public_sg_id
   private_sg_id      = module.security.private_sg_id
-  db_endpoint        = module.database.db_endpoint
+  database_sg_id     = module.security.database_sg_id
+  db_endpoint        = module.compute.db_endpoint
   db_name            = var.db_name
   db_username        = var.db_username
   db_password        = var.db_password
   db_port            = var.db_port
+  db_instance_class = var.db_instance_class
+  allocated_storage = var.allocated_storage
 
-  depends_on = [module.network, module.security, module.database]
+  depends_on = [module.network, module.security]
 }

@@ -54,6 +54,7 @@ variable "instance_type" {
 variable "key_name" {
   description = "Name of existing EC2 key pair in AWS"
   type        = string
+  default = "instance_prac_pem"
 }
 
 variable "root_volume_size" {
@@ -65,19 +66,10 @@ variable "root_volume_size" {
 # Database
 # ─────────────────────────────────────────────────────────────
 
-variable "db_engine" {
-  type    = string
-  default = "mysql"
-}
-
-variable "db_engine_version" {
-  type    = string
-  default = "8.0"
-}
 
 variable "db_instance_class" {
   type    = string
-  default = "db.t3.micro"
+  default = "t3.micro"
 }
 
 variable "db_name" {
@@ -105,9 +97,4 @@ variable "db_port" {
 variable "allocated_storage" {
   type    = number
   default = 20
-}
-
-variable "multi_az" {
-  type    = bool
-  default = false
 }

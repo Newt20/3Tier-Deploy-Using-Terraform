@@ -11,15 +11,12 @@ allowed_ssh_cidr         = "103.187.95.64/32"   # Replace!
 
 # ── Compute ──────────────────────────────────────────────────
 instance_type    = "t3.micro"
-key_name         = "nt-keypair"
+key_name         = "instance_prac_pem"
 root_volume_size = 20
 
 # ── Database ─────────────────────────────────────────────────
-db_engine         = "mysql"
-db_engine_version = "8.0"
-db_instance_class = "db.t3.micro"
+db_instance_class = "t3.micro"
 db_name           = "teamdb"
 db_username       = "nt_admin"
 # db_password   →  export TF_VAR_db_password="YourStrongPass1!"
 allocated_storage = 20
-multi_az          = false

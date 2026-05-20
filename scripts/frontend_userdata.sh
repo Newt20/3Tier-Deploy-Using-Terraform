@@ -42,7 +42,7 @@ cat > /var/www/html/app/index.html << 'HTMLAPP'
 <body>
 <header>
   <h1>Team Directory</h1>
-  <p>Live data pulled from RDS MySQL via Node.js API</p>
+  <p>Live data pulled from Database MySQL via Node.js API</p>
 </header>
 <div id="status" class="loading">Fetching data...</div>
 <div id="grid"></div>

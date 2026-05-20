@@ -24,7 +24,7 @@ output "backend_private_ip" {
 
 output "db_endpoint" {
   description = "RDS endpoint — injected into backend .env automatically"
-  value       = module.database.db_endpoint
+  value       = module.compute.db_endpoint
   sensitive   = true
 }
 
