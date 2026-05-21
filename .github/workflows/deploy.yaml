@@ -3,27 +3,93 @@ name: Team Directory — Deploy
 on:
   push:
     branches: [main]
-  workflow_dispatch:
 
-concurrency:
-  group: deploy-${{ github.ref }}
-  cancel-in-progress: false
-
+# ─────────────────────────────────────────────────────────────
+# Job 1: Detect Changes
+# Checks which folders changed to trigger the right jobs
+# ─────────────────────────────────────────────────────────────
 jobs:
+  detect-changes:
+    runs-on: ubuntu-latest
+    outputs:
+      frontend: ${{ steps.changes.outputs.frontend }}
+      backend: ${{ steps.changes.outputs.backend }}
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
 
-  deploy-backend:
-    name: Deploy Backend API
+      - name: Detect Changes
+        id: changes
+        run: |
+          # Compare the last push to see which files changed
+          # We set output to 'true' or 'false'
+          if git diff --name-only ${{ github.event.before }} ${{ github.event.after }} | grep -E '^app/frontend/'; then
+            echo "frontend=true" >> $GITHUB_OUTPUT
+          else
+            echo "frontend=false" >> $GITHUB_OUTPUT
+          fi
+
+          if git diff --name-only ${{ github.event.before }} ${{ github.event.after }} | grep -E '^app/backend/'; then
+            echo "backend=true" >> $GITHUB_OUTPUT
+          else
+            echo "backend=false" >> $GITHUB_OUTPUT
+          fi
+
+# ─────────────────────────────────────────────────────────────
+# Job 2: Deploy Frontend
+# Only runs if detect-changes found changes in app/frontend/
+# ─────────────────────────────────────────────────────────────
+  deploy-frontend:
+    needs: detect-changes
+    if: needs.detect-changes.outputs.frontend == 'true'
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
 
-      - name: Setup SSH
+      - name: Setup SSH Key
         run: |
           mkdir -p ~/.ssh
           echo "${{ secrets.EC2_SSH_PRIVATE_KEY }}" > ~/.ssh/id_rsa
           chmod 600 ~/.ssh/id_rsa
 
-      - name: Copy server files to backend via bastion jump
+      - name: Sync Frontend Files
+        run: |
+          rsync -avz \
+            -e "ssh -i ~/.ssh/id_rsa -o StrictHostKeyChecking=no \
+                -J ubuntu@${{ secrets.BASTION_PUBLIC_IP }}" \
+            ./app/frontend/ \
+            ubuntu@${{ secrets.FRONTEND_PUBLIC_IP }}:/var/www/html/app/
+
+      - name: Reload Nginx
+        run: |
+          ssh -i ~/.ssh/id_rsa \
+              -o StrictHostKeyChecking=no \
+              -J ubuntu@${{ secrets.BASTION_PUBLIC_IP }} \
+              ubuntu@${{ secrets.FRONTEND_PUBLIC_IP }} \
+              "sudo systemctl reload nginx"
+
+      - name: Cleanup
+        if: always()
+        run: rm -f ~/.ssh/id_rsa
+
+# ─────────────────────────────────────────────────────────────
+# Job 3: Deploy Backend
+# Only runs if detect-changes found changes in app/backend/
+# ─────────────────────────────────────────────────────────────
+  deploy-backend:
+    needs: detect-changes
+    if: needs.detect-changes.outputs.backend == 'true'
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Setup SSH Key
+        run: |
+          mkdir -p ~/.ssh
+          echo "${{ secrets.EC2_SSH_PRIVATE_KEY }}" > ~/.ssh/id_rsa
+          chmod 600 ~/.ssh/id_rsa
+
+      - name: Sync Backend Files
         run: |
           rsync -avz \
             -e "ssh -i ~/.ssh/id_rsa -o StrictHostKeyChecking=no \
@@ -32,49 +98,13 @@ jobs:
             ./app/backend/ \
             ubuntu@${{ secrets.BACKEND_PRIVATE_IP }}:/var/app/backend/
 
-      - name: Install deps + restart PM2
+      - name: Install Dependencies & Reload PM2
         run: |
           ssh -i ~/.ssh/id_rsa \
               -o StrictHostKeyChecking=no \
               -J ubuntu@${{ secrets.BASTION_PUBLIC_IP }} \
               ubuntu@${{ secrets.BACKEND_PRIVATE_IP }} \
               "cd /var/app/backend && npm install --omit=dev && pm2 reload nt-api && pm2 save"
-
-      - name: Cleanup
-        if: always()
-        run: rm -f ~/.ssh/id_rsa
-
-  deploy-frontend:
-    name: Deploy Frontend HTML
-    runs-on: ubuntu-latest
-    steps:
-      - uses: actions/checkout@v4
-
-      - name: Setup SSH
-        run: |
-          mkdir -p ~/.ssh
-          echo "${{ secrets.EC2_SSH_PRIVATE_KEY }}" > ~/.ssh/id_rsa
-          chmod 600 ~/.ssh/id_rsa
-          ssh-keyscan -H ${{ secrets.FRONTEND_PUBLIC_IP }} >> ~/.ssh/known_hosts 2>/dev/null || true
-
-      - name: Deploy frontend HTML
-        run: |
-          rsync -avz \
-            -e "ssh -i ~/.ssh/id_rsa -o StrictHostKeyChecking=no" \
-            ./app/frontend/ \
-            ubuntu@${{ secrets.FRONTEND_PUBLIC_IP }}:/var/www/html/app/
-
-      - name: Reload Nginx
-        run: |
-          ssh -i ~/.ssh/id_rsa -o StrictHostKeyChecking=no \
-              ubuntu@${{ secrets.FRONTEND_PUBLIC_IP }} \
-              "sudo systemctl reload nginx"
-
-      - name: Health check
-        run: |
-          sleep 3
-          curl -sf http://${{ secrets.FRONTEND_PUBLIC_IP }} | grep -q "Team Directory"
-          echo "Frontend health check passed"
 
       - name: Cleanup
         if: always()

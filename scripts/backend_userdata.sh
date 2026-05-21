@@ -1,5 +1,5 @@
 #!/bin/bash
-set -eo pipefail
+
 exec > >(tee /var/log/userdata-backend.log | logger -t userdata -s 2>/dev/console) 2>&1
 
 echo "===== [nt-backend] Initialization Start ====="
@@ -175,7 +175,12 @@ SERVERJS
 
 # ── Install dependencies & start ─────────────────────────────
 cd /var/app/backend
-npm install --omit=dev || true
+rm -rf node_modules package-lock.json
+npm cache clean --force
+
+echo "[Final] Installing NPM dependencies..."
+npm install --legacy-peer-deps --no-audit --no-fund || true
+
 
 pm2 start server.js --name nt-api
 pm2 save

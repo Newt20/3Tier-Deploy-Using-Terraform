@@ -17,7 +17,8 @@
 
     header {
       text-align: center;
-      margin-bottom: 3rem;
+      margin-bottom: 2rem;
+      position: relative;
     }
 
     header h1 {
@@ -34,6 +35,22 @@
       margin-top: 0.5rem;
       font-size: 1rem;
     }
+
+    /* Add Button Styling */
+    #add-member-btn {
+      position: absolute;
+      top: 0;
+      right: 0;
+      background: linear-gradient(135deg, #0ea5e9, #6366f1);
+      color: white;
+      border: none;
+      padding: 0.6rem 1.2rem;
+      border-radius: 6px;
+      font-weight: 600;
+      cursor: pointer;
+      transition: opacity 0.2s;
+    }
+    #add-member-btn:hover { opacity: 0.9; }
 
     #status {
       text-align: center;
@@ -115,6 +132,43 @@
       font-size: 0.78rem;
       margin-top: 2.5rem;
     }
+
+    /* --- MODAL STYLES --- */
+    .modal {
+      display: none;
+      position: fixed;
+      z-index: 1000;
+      left: 0; top: 0;
+      width: 100%; height: 100%;
+      background-color: rgba(0,0,0,0.7);
+      align-items: center;
+      justify-content: center;
+    }
+    .modal-content {
+      background: #1e293b;
+      border: 1px solid #334155;
+      padding: 2rem;
+      border-radius: 12px;
+      width: 90%;
+      max-width: 400px;
+      box-shadow: 0 20px 25px -5px rgba(0, 0, 0, 0.5);
+    }
+    .modal h2 { margin-bottom: 1.5rem; color: #f1f5f9; }
+    .form-group { margin-bottom: 1rem; }
+    .form-group label { display: block; margin-bottom: 0.5rem; color: #94a3b8; font-size: 0.9rem; }
+    .form-group input, .form-group select {
+      width: 100%;
+      padding: 0.6rem;
+      background: #0f172a;
+      border: 1px solid #334155;
+      border-radius: 6px;
+      color: #e2e8f0;
+      box-sizing: border-box;
+    }
+    .form-group input:focus { outline: none; border-color: #38bdf8; }
+    .modal-buttons { display: flex; justify-content: flex-end; gap: 10px; margin-top: 1.5rem; }
+    .btn-cancel { background: #334155; color: white; border: none; padding: 0.6rem 1rem; border-radius: 6px; cursor: pointer; }
+    .btn-save { background: #38bdf8; color: white; border: none; padding: 0.6rem 1rem; border-radius: 6px; cursor: pointer; font-weight: 600; }
   </style>
 </head>
 <body>
@@ -122,14 +176,49 @@
 <header>
   <h1>Team Directory</h1>
   <p>Live data from RDS MySQL via REST API</p>
+  <button id="add-member-btn" onclick="openModal()">+ Add Member</button>
 </header>
 
 <div id="status" class="loading">Fetching team data from API...</div>
 <div id="grid"></div>
 <div id="meta"></div>
 
+<!-- ADD MEMBER MODAL -->
+<div id="addModal" class="modal">
+  <div class="modal-content">
+    <h2>Add New Member</h2>
+    <form id="add-member-form" onsubmit="submitMember(event)">
+      <div class="form-group">
+        <label>Full Name</label>
+        <input type="text" id="m-name" required placeholder="e.g. John Doe">
+      </div>
+      <div class="form-group">
+        <label>Role</label>
+        <input type="text" id="m-role" required placeholder="e.g. Developer">
+      </div>
+      <div class="form-group">
+        <label>Department</label>
+        <input type="text" id="m-dept" required placeholder="e.g. Engineering">
+      </div>
+      <div class="form-group">
+        <label>Location</label>
+        <input type="text" id="m-loc" required placeholder="e.g. New York">
+      </div>
+      <div class="form-group">
+        <label>Joined Date</label>
+        <input type="date" id="m-date" required>
+      </div>
+      <div class="modal-buttons">
+        <button type="button" class="btn-cancel" onclick="closeModal()">Cancel</button>
+        <button type="submit" class="btn-save">Save Member</button>
+      </div>
+    </form>
+  </div>
+</div>
+
 <script>
   const API_URL = '/api/members';
+  const modal = document.getElementById('addModal');
 
   async function loadMembers() {
     const status = document.getElementById('status');
@@ -170,6 +259,58 @@
     }
   }
 
+  // --- MODAL LOGIC ---
+  function openModal() {
+    document.getElementById('add-member-form').reset();
+    // Set default date to today
+    document.getElementById('m-date').valueAsDate = new Date();
+    modal.style.display = 'flex';
+  }
+
+  function closeModal() {
+    modal.style.display = 'none';
+  }
+
+  // --- SUBMIT LOGIC ---
+  async function submitMember(e) {
+    e.preventDefault();
+
+    const newMember = {
+      name: document.getElementById('m-name').value,
+      role: document.getElementById('m-role').value,
+      department: document.getElementById('m-dept').value,
+      location: document.getElementById('m-loc').value,
+      joined_at: document.getElementById('m-date').value
+    };
+
+    const status = document.getElementById('status');
+    status.className = 'loading';
+    status.textContent = 'Adding new member...';
+    status.style.display = 'block';
+
+    try {
+      const res = await fetch(API_URL, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(newMember)
+      });
+
+      if (!res.ok) throw new Error('Failed to add member');
+
+      closeModal();
+      loadMembers(); // Reload the list
+    } catch (err) {
+      status.className = 'error';
+      status.textContent = `Error: ${err.message}`;
+    }
+  }
+
+  // Close modal if clicking outside content
+  window.onclick = function(event) {
+    if (event.target == modal) closeModal();
+  }
+
+  // Initial Load
   loadMembers();
 </script>
 </body>

@@ -1,3 +1,4 @@
+require('dotenv').config();
 'use strict';
 
 const http     = require('http');
@@ -69,13 +70,32 @@ async function seedIfEmpty(pool) {
   console.log('[seed] Inserted 8 seed members');
 }
 
+// ── NEW: Helper to parse POST body from stream ───────────────
+async function getBody(req) {
+  return new Promise((resolve, reject) => {
+    try {
+      let body = '';
+      req.on('data', chunk => { body += chunk.toString(); });
+      req.on('end', () => { resolve(JSON.parse(body)); });
+    } catch (err) { reject(err); }
+  });
+}
+
 // ── Request router ────────────────────────────────────────────
 async function handler(req, res) {
-  // CORS headers (for local dev)
+  // CORS headers (allowing POST and OPTIONS)
   res.setHeader('Access-Control-Allow-Origin', '*');
+  res.setHeader('Access-Control-Allow-Methods', 'GET, POST, OPTIONS');
+  res.setHeader('Access-Control-Allow-Headers', 'Content-Type');
   res.setHeader('Content-Type', 'application/json');
 
   const url = req.url.split('?')[0];
+
+  // Handle Preflight (OPTIONS)
+  if (req.method === 'OPTIONS') {
+    res.writeHead(204);
+    return res.end();
+  }
 
   // ── GET /api/health ──────────────────────────────────────
   if (url === '/api/health' && req.method === 'GET') {
@@ -101,6 +121,33 @@ async function handler(req, res) {
       console.error('[/api/members] DB error:', err.message);
       res.writeHead(500);
       return res.end(JSON.stringify({ error: 'Database error', detail: err.message }));
+    }
+  }
+
+  // ── NEW: POST /api/members (Add Member) ───────────────────
+  if (url === '/api/members' && req.method === 'POST') {
+    try {
+      const body = await getBody(req);
+
+      // Basic validation
+      if (!body.name || !body.role || !body.department || !body.location || !body.joined_at) {
+        res.writeHead(400);
+        return res.end(JSON.stringify({ error: 'Missing required fields' }));
+      }
+
+      const p = await getPool();
+      await p.execute(
+        'INSERT INTO members (name, role, department, location, joined_at) VALUES (?, ?, ?, ?, ?)',
+        [body.name, body.role, body.department, body.location, body.joined_at]
+      );
+
+      res.writeHead(201); // 201 Created
+      return res.end(JSON.stringify({ message: 'Member added successfully', member: body }));
+
+    } catch (err) {
+      console.error('[POST /api/members] Error:', err.message);
+      res.writeHead(500);
+      return res.end(JSON.stringify({ error: 'Server error', detail: err.message }));
     }
   }
 
