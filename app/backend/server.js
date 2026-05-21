@@ -132,7 +132,7 @@ async function handler(req, res) {
       // Basic validation
       if (!body.name || !body.role || !body.department || !body.location || !body.joined_at) {
         res.writeHead(400);
-        return res.end(JSON.stringify({ error: 'Missing required fields' }));
+        return res.end(JSON.stringify({ error: 'Missing the required fields' }));
       }
 
       const p = await getPool();
