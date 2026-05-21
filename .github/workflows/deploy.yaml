@@ -42,11 +42,15 @@ jobs:
           echo "${{ secrets.EC2_SSH_PRIVATE_KEY }}" > ~/.ssh/id_rsa
           chmod 600 ~/.ssh/id_rsa
 
+          ssh-keyscan -H ${{ secrets.BASTION_PUBLIC_IP }} >> ~/.ssh/known_hosts
+          ssh-keyscan -H ${{ secrets.FRONTEND_PUBLIC_IP }} >> ~/.ssh/known_hosts
+
       - name: Sync Frontend Files
         run: |
           rsync -avz \
             -e "ssh -i ~/.ssh/id_rsa -o StrictHostKeyChecking=no \
                 -J ubuntu@${{ secrets.BASTION_PUBLIC_IP }}" \
+            --exclude node_modules \
             ./app/frontend/ \
             ubuntu@${{ secrets.FRONTEND_PUBLIC_IP }}:/var/www/html/app/
 
@@ -78,6 +82,7 @@ jobs:
           mkdir -p ~/.ssh
           echo "${{ secrets.EC2_SSH_PRIVATE_KEY }}" > ~/.ssh/id_rsa
           chmod 600 ~/.ssh/id_rsa
+          ssh-keyscan -H ${{ secrets.BASTION_PUBLIC_IP }} >> ~/.ssh/known_hosts
 
       - name: Sync Backend Files
         run: |
