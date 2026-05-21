@@ -1,16 +1,17 @@
 # 3Tier-Deploy-Using-Terraform
 
 ## 📑 Table of Contents
-- [Overview](#-overview)
+- [Overview](#overview)
 - [Architecture Setup](#architecture-setup)
 - [Terraform Structure](#terraform-structure)
 - [Configuration Steps](#configuration-steps)
-  - [Frontend EC2 (Boot-time Setup)](#frontend-ec2)
-  - [Backend EC2 (Boot-time Setup)](#backend-ec2)
-  - [Database EC2 (Boot-time Setup)](#database-ec2)
-- [Screenshots](#-screenshots)
+  - [Frontend EC2 (Boot-time Setup)](#frontend-ec2-boot-time-setup)
+  - [Backend EC2 (Boot-time Setup)](#backend-ec2-boot-time-setup)
+  - [Database EC2 (Boot-time Setup)](#database-ec2-boot-time-setup)
+- [Screenshots](#screenshots)
 - [Architecture Diagram](#architecture-diagram)
-- [Security Group Relationships](#-security-group-relationships)
+- [Security Group Relationships](#security-group-relationships)
+
 
 
 ## 📖 Overview
@@ -73,7 +74,7 @@ The infrastructure is fully defined in Terraform, creating a secure 3-tier archi
 
 ## 🛠️ Configuration Steps
 
-### Frontend EC2 (Boot Time Setup)
+### Frontend EC2 (Boot-time Setup)
 ```bash
 #!/bin/bash
 set -euo pipefail
@@ -226,7 +227,7 @@ server {
 }
 ```
 
-### Backend EC2 (Boot Time Setup)
+### Backend EC2 (Boot-time Setup)
 
 ```bash
 #!/bin/bash
