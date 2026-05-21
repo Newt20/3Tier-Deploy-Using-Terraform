@@ -114,7 +114,7 @@ jobs:
               -J ubuntu@${{ secrets.BASTION_PUBLIC_IP }} \
               ubuntu@${{ secrets.BACKEND_PRIVATE_IP }} \
               "cd /var/app/backend && \
-               sudo -i bash -c 'source /root/.nvm/nvm.sh && npm install --omit=dev && pm2 reload nt-api && pm2 save && \
+               sudo -i bash -c 'cd /var/app/backend && source /root/.nvm/nvm.sh && npm install --omit=dev && pm2 reload nt-api && pm2 save && \
                chown -R ubuntu:ubuntu /var/app/backend'"
 
       - name: Cleanup
