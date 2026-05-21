@@ -2,12 +2,12 @@
 
 ## 📑 Table of Contents
 - [Overview](#-overview)
-- [Architecture Setup](#-architecture-setup)
-- [Terraform Structure](#-terraform-structure)
-- [Configuration Steps](#-configuration-steps)
-  - [Frontend EC2 (Boot-time Setup)](#-frontend-ec2)
-  - [Backend EC2 (Boot-time Setup)](#-backend-ec2)
-  - [Database EC2 (Boot-time Setup)](#-database-ec2)
+- [Architecture Setup](#architecture-setup)
+- [Terraform Structure](#terraform-structure)
+- [Configuration Steps](#configuration-steps)
+  - [Frontend EC2 (Boot-time Setup)](#frontend-ec2)
+  - [Backend EC2 (Boot-time Setup)](#backend-ec2)
+  - [Database EC2 (Boot-time Setup)](#database-ec2)
 - [Screenshots](#-screenshots)
 - [Architecture Diagram](#architecture-diagram)
 - [Security Group Relationships](#-security-group-relationships)
