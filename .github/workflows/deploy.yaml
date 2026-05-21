@@ -29,7 +29,7 @@ jobs:
 # Job 2: Deploy Frontend
 # Only runs if detect-changes found changes in app/frontend/
 # ─────────────────────────────────────────────────────────────
-  deploy-frontend:
+   deploy-frontend:
     needs: detect-changes
     if: needs.detect-changes.outputs.frontend == 'true'
     runs-on: ubuntu-latest
