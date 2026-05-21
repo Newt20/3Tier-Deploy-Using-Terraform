@@ -44,7 +44,13 @@ jobs:
 
           ssh-keyscan -H ${{ secrets.BASTION_PUBLIC_IP }} >> ~/.ssh/known_hosts
           ssh-keyscan -H ${{ secrets.FRONTEND_PUBLIC_IP }} >> ~/.ssh/known_hosts
-
+      - name: Fix Permissions
+        run: |
+          ssh -i ~/.ssh/id_rsa \
+              -o StrictHostKeyChecking=no \
+              -J ubuntu@${{ secrets.BASTION_PUBLIC_IP }} \
+              ubuntu@${{ secrets.FRONTEND_PUBLIC_IP }} \
+              "sudo chown -R ubuntu:ubuntu /var/www/html/app"
       - name: Sync Frontend Files
         run: |
           rsync -avz \
@@ -83,6 +89,14 @@ jobs:
           echo "${{ secrets.EC2_SSH_PRIVATE_KEY }}" > ~/.ssh/id_rsa
           chmod 600 ~/.ssh/id_rsa
           ssh-keyscan -H ${{ secrets.BASTION_PUBLIC_IP }} >> ~/.ssh/known_hosts
+
+      - name: Fix Permissions
+        run: |
+          ssh -i ~/.ssh/id_rsa \
+              -o StrictHostKeyChecking=no \
+              -J ubuntu@${{ secrets.BASTION_PUBLIC_IP }} \
+              ubuntu@${{ secrets.BACKEND_PRIVATE_IP }} \
+              "sudo chown -R ubuntu:ubuntu /var/app/backend"
 
       - name: Sync Backend Files
         run: |
