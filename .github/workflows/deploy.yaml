@@ -9,31 +9,21 @@ on:
 # Checks which folders changed to trigger the right jobs
 # ─────────────────────────────────────────────────────────────
 jobs:
-  detect-changes:
+   detect-changes:
     runs-on: ubuntu-latest
     outputs:
-      frontend: ${{ steps.changes.outputs.frontend }}
-      backend: ${{ steps.changes.outputs.backend }}
+      frontend: ${{ steps.filter.outputs.frontend }}
+      backend: ${{ steps.filter.outputs.backend }}
     steps:
-      - name: Checkout code
-        uses: actions/checkout@v4
-
-      - name: Detect Changes
-        id: changes
-        run: |
-          # Compare the last push to see which files changed
-          # We set output to 'true' or 'false'
-          if git diff --name-only ${{ github.event.before }} ${{ github.event.after }} | grep -E '^app/frontend/'; then
-            echo "frontend=true" >> $GITHUB_OUTPUT
-          else
-            echo "frontend=false" >> $GITHUB_OUTPUT
-          fi
-
-          if git diff --name-only ${{ github.event.before }} ${{ github.event.after }} | grep -E '^app/backend/'; then
-            echo "backend=true" >> $GITHUB_OUTPUT
-          else
-            echo "backend=false" >> $GITHUB_OUTPUT
-          fi
+      - uses: actions/checkout@v4
+      - uses: dorny/paths-filter@v2
+        id: filter
+        with:
+          filters: |
+            frontend:
+              - 'app/frontend/**'
+            backend:
+              - 'app/backend/**'
 
 # ─────────────────────────────────────────────────────────────
 # Job 2: Deploy Frontend
