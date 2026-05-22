@@ -417,10 +417,7 @@ echo "===== [nt-backend] Init Complete ====="
 ### 7. Deployed
 ![deployed](Image/Deployed.png)
 
-### 8. BackEnd Deploy - packageJson fixed
-![BackEndDeployFixed](Image/Fix_backendDeploy_packageJson.png)
-
-### 9. Post Pipeline Deployment
+### 8. Post Pipeline Deployment
 ![PostPipelineDeployment](Image/post_PipelineDeployment.png)
 
 ---
