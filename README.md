@@ -12,8 +12,6 @@
 - [Architecture Diagram](#architecture-diagram)
 - [Security Group Relationships](#security-group-relationships)
 
-
-
 ## 📖 Overview
 This project demonstrates deploying a full-stack Team Directory Application using Infrastructure as Code (Terraform) on AWS EC2.
 
@@ -21,6 +19,17 @@ This project demonstrates deploying a full-stack Team Directory Application usin
 - **Application Layer (Backend)** → Node.js (Raw HTTP) API managed by PM2 (Private EC2)
 - **Data Layer (Database)** →  MySQL Server (Private EC2)
 - **Management Layer** →  Bastion Host for secure SSH access.
+
+## Deploy
+To create the infrastructure with application, Clone the repository, then run
+```js
+terraform init
+terraform plan
+terraform apply
+```
+After work is done be sure to run ```terraform destroy```.
+
+You will need to install terraform in your machine - add the binaries in Environment Variables, install AWS CLI and configure with your access key ID and password of AWS. **Note**: Create a profile, do not default. Not a good practice, nor is it safe.
 
 ---
 
